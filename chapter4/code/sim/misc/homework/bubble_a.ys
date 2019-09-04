@@ -1,0 +1,57 @@
+# Execution begins at address 0 
+	.pos 0 
+	irmovq stack, %rsp  	# Set up stack pointer  
+	call main		# Execute main program
+	halt			# Terminate program 
+
+# Array of 4 elements
+	.align 8 	
+data:	
+  .quad 0x0000000d0004
+  .quad 0x0000000d0003
+  .quad 0x0000000d0002
+data_end:
+  .quad 0x0000000d0001
+
+
+main:
+	irmovq data,%rdi	
+	irmovq data_end,%rsi
+	call bubble_a
+	ret 
+
+/* $begin bubble */
+# void bubble_a(long *data, long *end) 
+bubble_a:
+	jmp	test_1
+loop_2:
+	mrmovq	8(%rax), %rdx
+	mrmovq	(%rax), %rcx
+
+	rrmovq %rdx, %r8  #cmpq	%rcx, %rdx
+  subq %rcx, %r8
+	jge	L15
+
+	rmmovq	%rcx, 8(%rax)
+	rmmovq	%rdx, (%rax)
+
+L15:
+	iaddq	$8, %rax
+	jmp	test_2
+init_2:
+	rrmovq	%rdi, %rax
+test_2:
+	rrmovq %rsi, %r8 #cmpq	%rax, %rsi
+  subq %rax, %r8
+	jg loop_2
+	iaddq	$-8, %rsi   #init_1
+test_1:
+	rrmovq %rsi, %r8 #cmpq	%rdi, %rsi
+  subq %rdi, %r8
+	jg init_2
+	ret
+/* $end bubble*/
+
+# The stack starts here and grows to lower addresses
+	.pos 0x200
+stack:	 

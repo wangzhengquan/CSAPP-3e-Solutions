@@ -1,0 +1,120 @@
+                            | # Execution begins at address 0 
+0x000:                      | 	.pos 0 
+0x000: 30f40003000000000000 | 	irmovq stack, %rsp  	# Set up stack pointer  
+0x00a: 806800000000000000   | 	call main		# Execute main program
+0x013: 00                   | 	halt			# Terminate program 
+                            | 
+                            | # Array of 4 elements
+0x018:                      |   .align 8
+0x018:                      | array:
+0x018: 0000000000000000     |   .quad 0x0
+0x020: 0000000000000000     |   .quad 0x0
+0x028: 0000000000000000     |   .quad 0x0
+0x030: 0000000000000000     |   .quad 0x0
+0x038: 0000000000000000     |   .quad 0x0
+0x040: 0000000000000000     |   .quad 0x0
+0x048: 0000000000000000     |   .quad 0x0
+0x050: 0000000000000000     |   .quad 0x0
+                            | 
+0x058:                      |   .align 8
+0x058: 0800000000000000     | CNT: .quad 0x8
+0x060: ffffffffffffffff     | MINVAL: .quad 0xffffffffffffffff
+                            | 
+0x068:                      | main:
+0x068: a05f                 |   pushq %rbp
+0x06a: 2045                 |   rrmovq %rsp, %rbp
+0x06c: c0f4c0ffffffffffffff |   iaddq $-64, %rsp
+0x076: c0f4f0ffffffffffffff |   iaddq $-16, %rsp
+                            | 
+0x080: a03f                 |   pushq %rbx
+                            |   #irmovq array, %rbx
+0x082: 2053                 |   rrmovq %rbp, %rbx
+0x084: c0f3c0ffffffffffffff |   iaddq $-64, %rbx
+                            | 
+0x08e:                      | ainit:  
+0x08e: 30f60000000000000000 |   irmovq $0, %rsi          #i=0
+0x098: 4065b0ffffffffffffff |   rmmovq %rsi, -80(%rbp)
+0x0a2:                      | aloop:
+                            |   #mrmovq MINVAL, %rdi
+0x0a2: 30f7ffffffffffffffff |   irmovq $-1, %rdi
+0x0ac: 6067                 |   addq %rsi, %rdi
+0x0ae: 809001000000000000   |   call switchv
+0x0b7: 40030000000000000000 |   rmmovq %rax, (%rbx)
+0x0c1: c0f30800000000000000 |   iaddq $8, %rbx
+0x0cb: 5065b0ffffffffffffff |   mrmovq -80(%rbp), %rsi   #i++
+0x0d5: c0f60100000000000000 |   iaddq $1, %rsi
+0x0df: 4065b0ffffffffffffff |   rmmovq %rsi, -80(%rbp)
+0x0e9:                      | atest:  
+                            |   #mrmovq CNT, %r9          # if i<CNT
+0x0e9: 30f90800000000000000 |   irmovq $8, %r9
+0x0f3: 6169                 |   subq %rsi, %r9
+0x0f5: 76a200000000000000   |   jg aloop
+                            | 
+0x0fe: b03f                 |   popq %rbx
+0x100: 2054                 |   rrmovq %rbp, %rsp
+0x102: b05f                 |   popq %rbp
+0x104: 90                   | 	ret
+                            | 
+0x105:                      | mul:
+0x105: 30f00000000000000000 |   irmovq $0, %rax
+0x10f: 30f20000000000000000 |   irmovq $0, %rdx
+0x119: 6162                 |   subq %rsi, %rdx
+0x11b: 735801000000000000   |   je end
+0x124: 2061                 |   rrmovq %rsi, %rcx
+0x126: 2626                 |   cmovg %rdx, %rsi
+0x128:                      | mloop:  
+0x128: 6070                 |   addq %rdi, %rax
+0x12a: c0f6ffffffffffffffff |   iaddq $-1, %rsi
+0x134:                      | mtest:
+0x134: 742801000000000000   |   jne mloop
+                            | 
+0x13d: 30f20000000000000000 |   irmovq $0, %rdx
+0x147: 6112                 |   subq %rcx, %rdx
+0x149: 725801000000000000   |   jl end
+0x152: 2002                 |   rrmovq %rax, %rdx
+0x154: 6300                 |   xorq %rax, %rax
+0x156: 6120                 |   subq %rdx, %rax
+0x158:                      | end:
+0x158: 90                   |   ret
+                            | 
+0x160:                      | 	.align 8 	
+0x160:                      | jtable:
+0x160: da01000000000000     |   .quad L0
+0x168: 1302000000000000     |   .quad default
+0x170: ed01000000000000     |   .quad L2
+0x178: 0002000000000000     |   .quad L3
+0x180: 1302000000000000     |   .quad default
+0x188: ed01000000000000     |   .quad L2
+                            | 
+                            | /* $begin switch */
+0x190:                      | switchv:
+0x190: 30f60000000000000000 |   irmovq $0, %rsi
+0x19a: 6176                 |   subq %rdi, %rsi
+0x19c: 761302000000000000   |   jg default
+0x1a5: 30f60500000000000000 |   irmovq $5, %rsi
+0x1af: 6176                 |   subq %rdi, %rsi
+0x1b1: 721302000000000000   |   jl default
+0x1ba: 30f60800000000000000 |   irmovq $8, %rsi
+0x1c4: 800501000000000000   |   call mul
+0x1cd: 50006001000000000000 |   mrmovq jtable(%rax), %rax
+0x1d7: a00f                 |   pushq %rax
+0x1d9: 90                   |   ret
+0x1da:                      | L0:
+0x1da: 30f0aa0a000000000000 | 	irmovq $0xaaa,%rax
+0x1e4: 705801000000000000   |   jmp end
+0x1ed:                      | L2:
+0x1ed:                      | L5:
+0x1ed: 30f0bb0b000000000000 | 	irmovq $0xbbb,%rax
+0x1f7: 705801000000000000   |   jmp end
+0x200:                      | L3:
+0x200: 30f0cc0c000000000000 | 	irmovq $0xccc,%rax
+0x20a: 705801000000000000   |   jmp end
+0x213:                      | default:
+0x213: 30f0dd0d000000000000 | 	irmovq $0xddd,%rax
+0x21d:                      | end:
+0x21d: 90                   | 	ret
+                            | /* $end sumi-ys */
+                            | 
+                            | # The stack starts here and grows to lower addresses
+0x300:                      | 	.pos 0x300		
+0x300:                      | stack:	 

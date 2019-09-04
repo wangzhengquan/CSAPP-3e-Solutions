@@ -135,14 +135,12 @@ wordsig W_valM  'mem_wb_curr->valm'	# Memory M value
 ####################################################################
 
 ################ Fetch Stage     ###################################
-
+#valA= valP , valE= valC
 ## What address should instruction be fetched at
 word f_pc = [
 	# Mispredicted branch.  Fetch at incremented PC
-	# backward taken error
-	M_icode == IJXX && M_ifun != UNCOND && M_valE < M_valA && !M_Cnd : M_valA;
-	# forward not-taken error
-	M_icode == IJXX && M_ifun != UNCOND && M_valE >= M_valA && M_Cnd : M_valE;
+	M_icode == IJXX && M_ifun != UNCOND && M_valE > M_valA && M_Cnd:M_valE;
+	M_icode == IJXX && M_ifun != UNCOND && M_valE < M_valA && !M_Cnd:M_valA;
 	# Completion of RET instruction
 	W_icode == IRET : W_valM;
 	# Default: Use predicted value of PC
@@ -186,9 +184,9 @@ bool need_valC =
 # Predict next value of PC
 word f_predPC = [
 	# BBTFNT: This is where you'll change the branch prediction rule
-	f_icode == IJXX && f_ifun != UNCOND && f_valC < f_valP : f_valC;
-	f_icode == IJXX && f_ifun != UNCOND && f_valC >= f_valP : f_valP;
-	f_icode in { IJXX, ICALL } : f_valC;
+	f_icode == IJXX && f_ifun != UNCOND && f_valC < f_valP: f_valC;
+  f_icode == IJXX && f_ifun == UNCOND: f_valC;
+	f_icode in { ICALL } : f_valC;
 	1 : f_valP;
 ];
 
@@ -249,15 +247,12 @@ word d_valB = [
 # way to get valC into pipeline register M, so that
 # you can correct for a mispredicted branch.
 
-## pass valC by M_valE, pass valP by M_valA
-
 ## Select input A to ALU
 word aluA = [
 	E_icode in { IRRMOVQ, IOPQ } : E_valA;
-	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ } : E_valC;
+	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ, IJXX } : E_valC;
 	E_icode in { ICALL, IPUSHQ } : -8;
 	E_icode in { IRET, IPOPQ } : 8;
-	E_icode in { IJXX } : E_valC;
 	# Other instructions don't need ALU
 ];
 
@@ -265,8 +260,7 @@ word aluA = [
 word aluB = [
 	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
 		     IPUSHQ, IRET, IPOPQ } : E_valB;
-	E_icode in { IRRMOVQ, IIRMOVQ } : 0;
-	E_icode in { IJXX } : 0;
+	E_icode in { IRRMOVQ, IIRMOVQ, IJXX } : 0;
 	# Other instructions don't need ALU
 ];
 
@@ -332,7 +326,7 @@ word Stat = [
 ];
 
 ################ Pipeline Register Control #########################
-
+#
 # Should I stall or inject a bubble into Pipeline Register F?
 # At most one of these can be true.
 bool F_bubble = 0;
@@ -341,7 +335,10 @@ bool F_stall =
 	E_icode in { IMRMOVQ, IPOPQ } &&
 	 E_dstM in { d_srcA, d_srcB } ||
 	# Stalling at fetch while ret passes through pipeline
-	IRET in { D_icode, E_icode, M_icode };
+	( IRET in { D_icode, E_icode, M_icode } &&
+    !((E_icode == IJXX && E_ifun != UNCOND && E_valC > E_valA && e_Cnd) ||
+      (E_icode == IJXX && E_ifun != UNCOND && E_valC < E_valA && !e_Cnd))
+  );
 
 # Should I stall or inject a bubble into Pipeline Register D?
 # At most one of these can be true.
@@ -352,11 +349,8 @@ bool D_stall =
 
 bool D_bubble =
 	# Mispredicted branch
-	# backward taken error or forward not-taken error
-	(
-	(E_icode == IJXX && E_ifun != UNCOND && E_valC < E_valA && !e_Cnd) ||
-	(E_icode == IJXX && E_ifun != UNCOND && E_valC >= E_valA && e_Cnd)
-	) ||
+  (E_icode == IJXX && E_ifun != UNCOND && E_valC > E_valA && e_Cnd) ||
+  (E_icode == IJXX && E_ifun != UNCOND && E_valC < E_valA && !e_Cnd) ||
 	# BBTFNT: This condition will change
 	# Stalling at fetch while ret passes through pipeline
 	# but not condition for a load/use hazard
@@ -368,15 +362,11 @@ bool D_bubble =
 bool E_stall = 0;
 bool E_bubble =
 	# Mispredicted branch
-	# backward taken error or forward not-taken error
-	(
-	(E_icode == IJXX && E_ifun != UNCOND && E_valC < E_valA && !e_Cnd) ||
-	(E_icode == IJXX && E_ifun != UNCOND && E_valC >= E_valA && e_Cnd)
-	) ||
+  (E_icode == IJXX && E_ifun != UNCOND && E_valC > E_valA && e_Cnd) ||
+  (E_icode == IJXX && E_ifun != UNCOND && E_valC < E_valA && !e_Cnd) ||
 	# BBTFNT: This condition will change
 	# Conditions for a load/use hazard
-	E_icode in { IMRMOVQ, IPOPQ } &&
-	 E_dstM in { d_srcA, d_srcB};
+	E_icode in { IMRMOVQ, IPOPQ } && E_dstM in { d_srcA, d_srcB};
 
 # Should I stall or inject a bubble into Pipeline Register M?
 # At most one of these can be true.

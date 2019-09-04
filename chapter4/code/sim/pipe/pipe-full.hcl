@@ -195,7 +195,7 @@ word d_srcA = [
 
 ## What register should be used as the B source?
 word d_srcB = [
-	D_icode in { IOPQ, IRMMOVQ, IMRMOVQ, IIADDQ  } : D_rB;
+	D_icode in { IOPQ, IRMMOVQ, IMRMOVQ, IIADDQ } : D_rB;
 	D_icode in { IPUSHQ, IPOPQ, ICALL, IRET } : RRSP;
 	1 : RNONE;  # Don't need register
 ];
@@ -260,7 +260,7 @@ word alufun = [
 ];
 
 ## Should the condition codes be updated?
-bool set_cc = (E_icode == IOPQ || E_icode == IIADDQ) &&
+bool set_cc = E_icode in { IOPQ, IIADDQ } &&
 	# State changes only during normal operation
 	!m_stat in { SADR, SINS, SHLT } && !W_stat in { SADR, SINS, SHLT };
 
@@ -296,6 +296,8 @@ word m_stat = [
 ];
 #/* $end pipe-m_stat-hcl */
 
+################ Write Back Stage ######################################
+
 ## Set E port register ID
 word w_dstE = W_dstE;
 
@@ -324,7 +326,7 @@ bool F_stall =
 	E_icode in { IMRMOVQ, IPOPQ } &&
 	 E_dstM in { d_srcA, d_srcB } ||
 	# Stalling at fetch while ret passes through pipeline
-	IRET in { D_icode, E_icode, M_icode };
+	(IRET in { D_icode, E_icode, M_icode } && !(E_icode == IJXX && !e_Cnd ));
 
 # Should I stall or inject a bubble into Pipeline Register D?
 # At most one of these can be true.

@@ -323,8 +323,7 @@ bool F_stall =
 # At most one of these can be true.
 bool D_stall = 
 	# Conditions for a load/use hazard
-	E_icode in { IMRMOVQ, IPOPQ } &&
-	 E_dstM in { d_srcA, d_srcB };
+	E_icode in { IMRMOVQ, IPOPQ } && E_dstM in { d_srcA, d_srcB };
 
 bool D_bubble =
 	# Mispredicted branch

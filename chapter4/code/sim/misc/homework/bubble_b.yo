@@ -1,0 +1,58 @@
+                            | # Execution begins at address 0 
+0x000:                      | 	.pos 0 
+0x000: 30f40002000000000000 | 	irmovq stack, %rsp  	# Set up stack pointer  
+0x00a: 803800000000000000   | 	call main		# Execute main program
+0x013: 00                   | 	halt			# Terminate program 
+                            | 
+                            | # Array of 4 elements
+0x018:                      | 	.align 8 	
+0x018:                      | data:	
+0x018: 04000d0000000000     |   .quad 0x0000000d0004
+0x020: 03000d0000000000     |   .quad 0x0000000d0003
+0x028: 02000d0000000000     |   .quad 0x0000000d0002
+0x030:                      | data_end:
+0x030: 01000d0000000000     |   .quad 0x0000000d0001
+                            | 
+                            | 
+0x038:                      | main:
+0x038: 30f71800000000000000 | 	irmovq data,%rdi	
+0x042: 30f63000000000000000 | 	irmovq data_end,%rsi
+0x04c: 805600000000000000   | 	call bubble_a
+0x055: 90                   | 	ret 
+                            | 
+                            | /* $begin bubble */
+                            | # void bubble_a(long *data, long *end) 
+0x056:                      | bubble_a:
+0x056: 70bd00000000000000   | 	jmp	test_1
+0x05f:                      | loop_2:
+0x05f: 50200800000000000000 | 	mrmovq	8(%rax), %rdx
+0x069: 50100000000000000000 | 	mrmovq	(%rax), %rcx
+0x073: 2028                 | 	rrmovq %rdx, %r8  #cmpq	%rcx, %rdx
+0x075: 6118                 |   subq %rcx, %r8
+                            | 
+0x077: 2028                 |   rrmovq %rdx, %r8
+0x079: 2512                 | 	cmovge	%rcx, %rdx
+0x07b: 2581                 | 	cmovge	%r8, %rcx
+                            | 
+0x07d: 40100800000000000000 | 	rmmovq	%rcx, 8(%rax)
+0x087: 40200000000000000000 | 	rmmovq	%rdx, (%rax)
+                            | 
+0x091: c0f00800000000000000 | 	iaddq	$8, %rax
+0x09b: 70a600000000000000   | 	jmp	test_2
+0x0a4:                      | init_2:
+0x0a4: 2070                 | 	rrmovq	%rdi, %rax
+0x0a6:                      | test_2:
+0x0a6: 2068                 | 	rrmovq %rsi, %r8 #cmpq	%rax, %rsi
+0x0a8: 6108                 |   subq %rax, %r8
+0x0aa: 765f00000000000000   | 	jg loop_2
+0x0b3: c0f6f8ffffffffffffff | 	iaddq	$-8, %rsi   #init_1
+0x0bd:                      | test_1:
+0x0bd: 2068                 | 	rrmovq %rsi, %r8 #cmpq	%rdi, %rsi
+0x0bf: 6178                 |   subq %rdi, %r8
+0x0c1: 76a400000000000000   | 	jg init_2
+0x0ca: 90                   | 	ret
+                            | /* $end bubble*/
+                            | 
+                            | # The stack starts here and grows to lower addresses
+0x200:                      | 	.pos 0x200
+0x200:                      | stack:	 

@@ -1,0 +1,48 @@
+# Execution begins at address 0 
+	.pos 0 
+	irmovq stack, %rsp  	# Set up stack pointer  
+	call main		# Execute main program
+	halt			# Terminate program 
+
+
+.align 8
+## Source block
+src:
+.quad 0x00a
+.quad 0x0b0
+.quad 0xc00
+# Destination
+dest:
+.quad 0x111
+.quad 0x222
+.quad 0x333
+
+main:	
+  irmovq src,%rdi	
+  irmovq dest,%rsi	
+  irmovq $3,%rdx	
+	call copy_block
+	ret 
+
+/* $begin sumi-ys */
+# long copyblock(long *src, long *dist, long len)
+# start in %rdi, count in %rsi
+copy_block:
+  xorq %rax, %rax
+  andq %rdx,%rdx
+  jmp test
+loop:
+  mrmovq (%rdi), %r10
+  rmmovq %r10, (%rsi)
+  xorq %r10, %rax
+  iaddq $8, %rdi
+  iaddq $8, %rsi
+  iaddq $-1, %rdx
+test:
+  jne loop
+	ret
+/* $end sumi-ys */
+
+# The stack starts here and grows to lower addresses
+	.pos 0x100		
+stack:	 

@@ -22,10 +22,12 @@ ncopy:
 
 Loop:	mrmovq (%rdi), %r10	# read val from src...
 	rmmovq %r10, (%rsi)	# ...and store it to dst
+
   rrmovq %rax, %r11
   iaddq $1, %rax
 	andq %r10, %r10		# val <= 0?
   cmovle %r11, %rax
+
   iaddq $-1, %rdx
 	iaddq $8, %rdi		# src++
 	iaddq $8, %rsi		# dst++

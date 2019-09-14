@@ -1,92 +1,37 @@
---- /home/jimi/share/sim/pipe/pipe-btfnt.hcl	2014-12-29 23:08:40.000000000 +0800
-+++ ./pipe-btfnt.hcl	2019-09-03 18:41:29.266406554 +0800
-@@ -135,11 +135,12 @@
- ####################################################################
- 
- ################ Fetch Stage     ###################################
--
-+#valA= valP , valE= valC
- ## What address should instruction be fetched at
- word f_pc = [
- 	# Mispredicted branch.  Fetch at incremented PC
--	M_icode == IJXX && !M_Cnd : M_valA;
-+	M_icode == IJXX && M_ifun != UNCOND && M_valE > M_valA && M_Cnd:M_valE;
-+	M_icode == IJXX && M_ifun != UNCOND && M_valE < M_valA && !M_Cnd:M_valA;
- 	# Completion of RET instruction
- 	W_icode == IRET : W_valM;
- 	# Default: Use predicted value of PC
-@@ -183,7 +184,9 @@
- # Predict next value of PC
- word f_predPC = [
- 	# BBTFNT: This is where you'll change the branch prediction rule
--	f_icode in { IJXX, ICALL } : f_valC;
-+	f_icode == IJXX && f_ifun != UNCOND && f_valC < f_valP: f_valC;
-+  f_icode == IJXX && f_ifun == UNCOND: f_valC;
-+	f_icode in { ICALL } : f_valC;
- 	1 : f_valP;
+--- /home/jimi/share/sim/pipe/pipe-lf.hcl	2014-12-29 23:08:40.000000000 +0800
++++ ./pipe-lf.hcl	2019-09-04 09:25:53.852006999 +0800
+@@ -271,6 +271,7 @@
+ ##   from memory stage when appropriate
+ ## Here it is set to the default used in the normal pipeline
+ word e_valA = [
++  M_icode in {IMRMOVQ, IPOPQ} && E_icode in {IRMMOVQ, IPUSHQ} && M_dstM == E_srcA : m_valM;
+ 	1 : E_valA;  # Use valA from stage pipe register
  ];
  
-@@ -247,7 +250,7 @@
- ## Select input A to ALU
- word aluA = [
- 	E_icode in { IRRMOVQ, IOPQ } : E_valA;
--	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ } : E_valC;
-+	E_icode in { IIRMOVQ, IRMMOVQ, IMRMOVQ, IJXX } : E_valC;
- 	E_icode in { ICALL, IPUSHQ } : -8;
- 	E_icode in { IRET, IPOPQ } : 8;
- 	# Other instructions don't need ALU
-@@ -257,7 +260,7 @@
- word aluB = [
- 	E_icode in { IRMMOVQ, IMRMOVQ, IOPQ, ICALL, 
- 		     IPUSHQ, IRET, IPOPQ } : E_valB;
--	E_icode in { IRRMOVQ, IIRMOVQ } : 0;
-+	E_icode in { IRRMOVQ, IIRMOVQ, IJXX } : 0;
- 	# Other instructions don't need ALU
- ];
- 
-@@ -323,7 +326,7 @@
- ];
- 
- ################ Pipeline Register Control #########################
--
-+#
- # Should I stall or inject a bubble into Pipeline Register F?
- # At most one of these can be true.
- bool F_bubble = 0;
-@@ -332,7 +335,10 @@
- 	E_icode in { IMRMOVQ, IPOPQ } &&
- 	 E_dstM in { d_srcA, d_srcB } ||
+@@ -329,7 +330,7 @@
+ bool F_stall =
+ 	# Conditions for a load/use hazard
+ 	## Set this to the new load/use condition
+-	0 ||
++	E_icode in {IMRMOVQ, IPOPQ} && !(D_icode in {IRMMOVQ, IPUSHQ}) && E_dstM in{d_srcA, d_srcB} ||
  	# Stalling at fetch while ret passes through pipeline
--	IRET in { D_icode, E_icode, M_icode };
-+	( IRET in { D_icode, E_icode, M_icode } &&
-+    !((E_icode == IJXX && E_ifun != UNCOND && E_valC > E_valA && e_Cnd) ||
-+      (E_icode == IJXX && E_ifun != UNCOND && E_valC < E_valA && !e_Cnd))
-+  );
+ 	IRET in { D_icode, E_icode, M_icode };
  
- # Should I stall or inject a bubble into Pipeline Register D?
- # At most one of these can be true.
-@@ -343,7 +349,8 @@
+@@ -338,7 +339,7 @@
+ bool D_stall = 
+ 	# Conditions for a load/use hazard
+ 	## Set this to the new load/use condition
+-	0; 
++	E_icode in {IMRMOVQ, IPOPQ} && !(D_icode in {IRMMOVQ, IPUSHQ}) && E_dstM in{d_srcA, d_srcB};
  
  bool D_bubble =
  	# Mispredicted branch
--	(E_icode == IJXX && !e_Cnd) ||
-+  (E_icode == IJXX && E_ifun != UNCOND && E_valC > E_valA && e_Cnd) ||
-+  (E_icode == IJXX && E_ifun != UNCOND && E_valC < E_valA && !e_Cnd) ||
- 	# BBTFNT: This condition will change
- 	# Stalling at fetch while ret passes through pipeline
- 	# but not condition for a load/use hazard
-@@ -355,11 +362,11 @@
- bool E_stall = 0;
- bool E_bubble =
- 	# Mispredicted branch
--	(E_icode == IJXX && !e_Cnd) ||
-+  (E_icode == IJXX && E_ifun != UNCOND && E_valC > E_valA && e_Cnd) ||
-+  (E_icode == IJXX && E_ifun != UNCOND && E_valC < E_valA && !e_Cnd) ||
- 	# BBTFNT: This condition will change
+@@ -356,7 +357,7 @@
+ 	(E_icode == IJXX && !e_Cnd) ||
  	# Conditions for a load/use hazard
--	E_icode in { IMRMOVQ, IPOPQ } &&
--	 E_dstM in { d_srcA, d_srcB};
-+	E_icode in { IMRMOVQ, IPOPQ } && E_dstM in { d_srcA, d_srcB};
+ 	## Set this to the new load/use condition
+-	0;
++	E_icode in {IMRMOVQ, IPOPQ} && !(D_icode in {IRMMOVQ, IPUSHQ}) && E_dstM in{d_srcA, d_srcB} ;
  
  # Should I stall or inject a bubble into Pipeline Register M?
  # At most one of these can be true.

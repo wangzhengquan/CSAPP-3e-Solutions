@@ -104,10 +104,10 @@
                             | ###############################
 0x190:                      | 	.align 8
 0x190:                      | src:
-0x190: 0100000000000000     | 	.quad 1
-0x198: 0200000000000000     | 	.quad 2
-0x1a0: fdffffffffffffff     | 	.quad -3
-0x1a8: fcffffffffffffff     | 	.quad -4
+0x190: ffffffffffffffff     | 	.quad -1
+0x198: feffffffffffffff     | 	.quad -2
+0x1a0: 0300000000000000     | 	.quad 3
+0x1a8: 0400000000000000     | 	.quad 4
 0x1b0: fadebc0000000000     | 	.quad 0xbcdefa # This shouldn't get moved
                             | 
 0x1c0:                      | 	.align 16

@@ -1,63 +1,73 @@
-/*
- * 5.19.c
- */
+
 #include <stdio.h>
 #include <assert.h>
 
-void psum1a(float a[], float p[], long n) {
+void psum(float a[], float p[], long n)
+{
   long i;
-  float last_val, val;
-  last_val = p[0] = a[0];
-  for (i = 1; i < n; i++) {
-    val = last_val + a[i];
+  p[0] = a[0];
+  for (i = 1; i < n; i++)
+    p[i] = p[i - 1] + a[i];
+}
+
+void psum1a(float a[], float p[], long n)
+{
+  long i;
+  float val;
+  val = p[0] = a[0];
+  for (i = 1; i < n; i++)
+  {
+    val = val + a[i];
     p[i] = val;
-    last_val = val;
   }
 }
 
-/* version 4*1a */
-void psum_4_1a(float a[], float p[], long n) {
+void psum_4_1a(float a[], float p[], long n)
+{
   long i;
-  float val, last_val;
-  float tmp, tmp1, tmp2, tmp3;
-  last_val = p[0] = a[0];
+  float val0, val1, val2, val3;
+  val0 = p[0] = a[0];
+  long limit = n - 3;
+  for (i = 1; i < limit; i += 4)
+  {
+    val0 = val0 + a[i] ;
+    p[i] = val0;
 
-  for (i = 1; i < n - 4; i++) {
-    tmp = last_val + a[i];
-    tmp1 = tmp + a[i+1];
-    tmp2 = tmp1 + a[i+2];
-    tmp3 = tmp2 + a[i+3];
+    val1 = val0 + a[i + 1] ;
+    p[i + 1] = val1;
 
-    p[i] = tmp;
-    p[i+1] = tmp1;
-    p[i+2] = tmp2;
-    p[i+3] = tmp3;
+    val2 = val1 + a[i + 2] ;
+    p[i + 2] = val2;
 
-    /* key point */
-    last_val = last_val + (a[i] + a[i+1] + a[i+2] + a[i+3]);
+    val3 = val2 + a[i + 3] ;
+    p[i + 3] = val3;
+
+    val0 = val3;
+
   }
 
-  for (; i < n; i++) {
-    last_val += a[i];
-    p[i] = last_val;
+  for (; i < n; i++)
+  {
+    val0 = val0 + a[i];
+    p[i] = val0;
   }
 }
 
 #define LOOP 1000
 #define LEN  1000
 
-int main(int argc, char* argv[]) {
-  float a[5] = { 1, 2, 3, 4, 5 };
-  float p[5];
-  psum1a(a, p, 5);
-  assert(p[4] == 15);
-
-  float q[5];
-  psum_4_1a(a, q, 5);
-  assert(q[4] == 15);
+int main(int argc, char* argv[])
+{
+  float a[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+  float p[10];
+  psum1a(a, p, 10);
+  float q[10];
+  psum_4_1a(a, q, 10);
+  assert(q[9] == p[9]);
 
   /* for prof */
-  for (int i = 0; i < LOOP; i++) {
+  for (int i = 0; i < LOOP; i++)
+  {
     float s[LEN];
     float d[LEN];
     psum1a(s, d, LEN);
@@ -65,5 +75,3 @@ int main(int argc, char* argv[]) {
   }
   return 0;
 }
-
-

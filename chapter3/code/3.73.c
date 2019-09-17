@@ -7,7 +7,7 @@
 typedef enum {NEG, ZERO, POS, OTHER} range_t;
 
 range_t find_range(float x) {
-  __asm__(
+ __asm__(
       "vxorps %xmm1, %xmm1, %xmm1\n\t"
       "vucomiss %xmm1, %xmm0\n\t"
       "jp .P\n\t"

@@ -4,8 +4,8 @@
 
 all:
 	(cd mountain; make)
-	gcc -m64 -std=c99 transpose.c -o transpose
-	gcc -m64 -std=c99 convert.c -o convert
+	gcc -m64 -std=c99 -pg transpose.c -o transpose
+	gcc -m64 -std=c99 -pg convert.c -o convert
 
 test:
 

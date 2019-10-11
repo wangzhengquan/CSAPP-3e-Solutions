@@ -17,7 +17,7 @@ double poly(double a[], double x, long degree)
   return result;
 }
 
-double poly2(double a[], double x, long degree)
+double poly3_3(double a[], double x, long degree)
 {
   long i = 1;
   double res1 = a[0];
@@ -62,12 +62,14 @@ double polyh(double a[], double x, long degree)
 }
 
 /* Apply Horner’s method */
-double polyh2(double a[], double x, long degree)
+double polyh3_1a(double a[], double x, long degree)
 {
   long i;
   double result = a[degree];
+  double xpwr2 = x * x;
+  double xpwr3 = x * x * x;
   for (i = degree - 1; i >= 2; i -= 3)
-    result = a[i - 2] + a[i - 1] * x  + a[i] * x * x + x * x * x * result;
+    result = a[i - 2] + a[i - 1] * x  + a[i] * xpwr2 + xpwr3 * result;
   for (; i >= 0; i--)
     result = a[i] + x * result;
   return result;
@@ -87,7 +89,7 @@ void test () {
   }
   for (int c = 0; c < LOOP; c++)
   {
-    poly2(b, x, degree);
+    poly3_3(b, x, degree);
   }
   for (int c = 0; c < LOOP; c++)
   {
@@ -95,7 +97,7 @@ void test () {
   }
   for (int c = 0; c < LOOP; c++)
   {
-    polyh2(b, x, degree);
+    polyh3_1a(b, x, degree);
   }
 }
 
@@ -106,8 +108,8 @@ int main(int argc, char* argv[])
   long degree = 10;
 
   assert(poly(a, x, degree) == 2 + 4 + 8 + 16 + 32 + (2 + 4 + 8 + 16 + 32) * 32);
-  assert(poly2(a, x, degree) == poly(a, x, degree)) ;
-  assert(polyh2(a, x, degree) == poly(a, x, degree));
+  assert(poly3_3(a, x, degree) == poly(a, x, degree)) ;
+  assert(polyh3_1a(a, x, degree) == poly(a, x, degree));
   test();
 
   return 0;

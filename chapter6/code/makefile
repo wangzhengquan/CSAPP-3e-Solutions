@@ -6,6 +6,7 @@ all:
 	(cd mountain; make)
 	gcc -m64 -std=c99 transpose.c -o transpose
 	gcc -m64 -std=c99 convert.c -o convert
+	gcc -m64 -std=c99 verify_6.37.c -o verify_6.37
 
 test:
 

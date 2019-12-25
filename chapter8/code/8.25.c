@@ -36,6 +36,11 @@ int main(int argc, char* argv[]) {
   } else {
     printf("%s", input);
   }
+  
+  while(1) {
+    sleep(1);
+    printf("run\n");
+  }
   return 0;
 }
 

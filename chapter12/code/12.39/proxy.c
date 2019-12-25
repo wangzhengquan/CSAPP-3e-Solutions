@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
   if (argc != 2) {
     fprintf(stderr, "usage: %s <port>\n", argv[0]);
     fprintf(stderr, "use default port 5000\n");
-    listenfd = Open_listenfd("5000");
+    listenfd = Open_listenfd("7070");
   } else {
     listenfd = Open_listenfd(argv[1]);
   }

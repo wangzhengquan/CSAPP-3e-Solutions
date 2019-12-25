@@ -22,33 +22,39 @@ void doit(int fd)
     return;
   printf("%s", buf);
   sscanf(buf, "%s %s %s", method, uri, version);       //line:netp:doit:parserequest
-  if (strcasecmp(method, "GET")) {                     //line:netp:doit:beginrequesterr
+  if (strcasecmp(method, "GET"))                       //line:netp:doit:beginrequesterr
+  {
     clienterror(fd, method, "501", "Not Implemented",
-        "Tiny does not implement this method");
+                "Tiny does not implement this method");
     return;
   }                                                    //line:netp:doit:endrequesterr
   read_requesthdrs(&rio);                              //line:netp:doit:readrequesthdrs
 
   /* Parse URI from GET request */
   is_static = parse_uri(uri, filename, cgiargs);       //line:netp:doit:staticcheck
-  if (stat(filename, &sbuf) < 0) {                     //line:netp:doit:beginnotfound
+  if (stat(filename, &sbuf) < 0)                       //line:netp:doit:beginnotfound
+  {
     clienterror(fd, filename, "404", "Not found",
-        "Tiny couldn't find this file");
+                "Tiny couldn't find this file");
     return;
   }                                                    //line:netp:doit:endnotfound
 
-  if (is_static) { /* Serve static content */
-    if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) { //line:netp:doit:readable
+  if (is_static)   /* Serve static content */
+  {
+    if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))   //line:netp:doit:readable
+    {
       clienterror(fd, filename, "403", "Forbidden",
-          "Tiny couldn't read the file");
+                  "Tiny couldn't read the file");
       return;
     }
     serve_static(fd, filename, sbuf.st_size);        //line:netp:doit:servestatic
   }
-  else { /* Serve dynamic content */
-    if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode)) { //line:netp:doit:executable
+  else   /* Serve dynamic content */
+  {
+    if (!(S_ISREG(sbuf.st_mode)) || !(S_IXUSR & sbuf.st_mode))   //line:netp:doit:executable
+    {
       clienterror(fd, filename, "403", "Forbidden",
-          "Tiny couldn't run the CGI program");
+                  "Tiny couldn't run the CGI program");
       return;
     }
     serve_dynamic(fd, filename, cgiargs);            //line:netp:doit:servedynamic
@@ -64,7 +70,8 @@ void read_requesthdrs(rio_t *rp)
 
   Rio_readlineb(rp, buf, MAXLINE);
   printf("%s", buf);
-  while(strcmp(buf, "\r\n")) {          //line:netp:readhdrs:checkterm
+  while (strcmp(buf, "\r\n"))           //line:netp:readhdrs:checkterm
+  {
     Rio_readlineb(rp, buf, MAXLINE);
     printf("%s", buf);
   }
@@ -83,14 +90,15 @@ int parse_uri(char *uri, char *filename, char *cgiargs)
     strcpy(cgiargs, "");                             //line:netp:parseuri:clearcgi
     strcpy(filename, ".");                           //line:netp:parseuri:beginconvert1
     strcat(filename, uri);                           //line:netp:parseuri:endconvert1
-    if (uri[strlen(uri)-1] == '/')                   //line:netp:parseuri:slashcheck
+    if (uri[strlen(uri) - 1] == '/')                 //line:netp:parseuri:slashcheck
       strcat(filename, "home.html");               //line:netp:parseuri:appenddefault
     return 1;
   }
   else {  /* Dynamic content */                        //line:netp:parseuri:isdynamic
     ptr = index(uri, '?');                           //line:netp:parseuri:beginextract
-    if (ptr) {
-      strcpy(cgiargs, ptr+1);
+    if (ptr)
+    {
+      strcpy(cgiargs, ptr + 1);
       *ptr = '\0';
     }
     else
@@ -169,7 +177,7 @@ void serve_dynamic(int fd, char *filename, char *cgiargs)
  * clienterror - returns an error message to the client
  */
 void clienterror(int fd, char *cause, char *errnum,
-    char *shortmsg, char *longmsg)
+                 char *shortmsg, char *longmsg)
 {
   char buf[MAXLINE], body[MAXBUF];
 

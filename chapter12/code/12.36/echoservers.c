@@ -12,7 +12,7 @@ void init_pool(int listenfd, pool *p)
   /* Initially, there are no connected descriptors */
   int i;
   p->maxi = -1;                   //line:conc:echoservers:beginempty
-  for (i=0; i< FD_SETSIZE; i++)
+  for (i = 0; i < FD_SETSIZE; i++)
     p->clientfd[i] = -1;        //line:conc:echoservers:endempty
 
   /* Initially, listenfd is only member of select read set */
@@ -26,7 +26,8 @@ void add_client(int connfd, pool *p)
   int i;
   p->nready--;
   for (i = 0; i < FD_SETSIZE; i++)  /* Find an available slot */
-    if (p->clientfd[i] < 0) {
+    if (p->clientfd[i] < 0)
+    {
       /* Add connected descriptor to the pool */
       p->clientfd[i] = connfd;                 //line:conc:echoservers:beginaddclient
       Rio_readinitb(&p->clientrio[i], connfd); //line:conc:echoservers:endaddclient
@@ -51,12 +52,14 @@ void check_clients(pool *p)
   char buf[MAXLINE];
   rio_t rio;
 
-  for (i = 0; (i <= p->maxi) && (p->nready > 0); i++) {
+  for (i = 0; (i <= p->maxi) && (p->nready > 0); i++)
+  {
     connfd = p->clientfd[i];
     rio = p->clientrio[i];
 
     /* If the descriptor is ready, echo a text line from it */
-    if ((connfd > 0) && (FD_ISSET(connfd, &p->ready_set))) {
+    if ((connfd > 0) && (FD_ISSET(connfd, &p->ready_set)))
+    {
       p->nready--;
 
       doit(connfd);
@@ -66,4 +69,3 @@ void check_clients(pool *p)
     }
   }
 }
-

@@ -7,7 +7,7 @@
 #include "sbuf.h"
 
 #define SBUFSIZE  4
-#define INIT_THREAD_N  1
+#define INIT_THREAD_N 4 
 #define THREAD_LIMIT 4096
 
 static int nthreads;
@@ -110,6 +110,7 @@ void *adjust_threads(void *vargp) {
         fprintf(stderr, "too many threads, can't double\n");
         continue;
       }
+      printf("=======double=====\n");
 
       // double n
       int dn = 2 * nthreads;
@@ -123,6 +124,7 @@ void *adjust_threads(void *vargp) {
       if (nthreads == 1)
         continue;
 
+      printf("=======half=====\n");
       // half n
       int hn = nthreads / 2;
       /*
